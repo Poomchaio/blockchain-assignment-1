@@ -41,9 +41,10 @@ class Block {
       const currentHash = self.hash;
       // Recalculate the hash of the Block
       // Comparing if the hashes changed
-      const hash = SHA246(JSON.stringify(this)).toString();
+      const hash = SHA256(JSON.stringify(this)).toString();
       // Returning the Block is not valid
       if (hash !== currentHash) resolve(false);
+      self.hash = currentHash;
       // Returning the Block is valid
       resolve(true);
     });
@@ -63,6 +64,9 @@ class Block {
     // Decoding the data to retrieve the JSON representation of the object
     // Parse the data to an object to be retrieve.
     // Resolve with the data if the object isn't the Genesis block
+    if (this.height == 0) {
+      return null;
+    }
     return JSON.parse(hex2ascii(this.data));
   }
 }
