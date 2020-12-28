@@ -40,13 +40,13 @@ class Block {
       // Save in auxiliary variable the current block hash
       const currentHash = self.hash;
       // Recalculate the hash of the Block
+      self.hash = null;
       // Comparing if the hashes changed
       const hash = SHA256(JSON.stringify(this)).toString();
       // Returning the Block is not valid
-      if (hash !== currentHash) resolve(false);
       self.hash = currentHash;
       // Returning the Block is valid
-      resolve(true);
+      resolve(hash === currentHash);
     });
   }
 
@@ -67,7 +67,7 @@ class Block {
     if (this.height == 0) {
       return null;
     }
-    return JSON.parse(hex2ascii(this.data));
+    return JSON.parse(hex2ascii(this.body));
   }
 }
 

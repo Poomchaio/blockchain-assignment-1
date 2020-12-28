@@ -72,7 +72,8 @@ class Blockchain {
         block.hash = SHA256(JSON.stringify(block)).toString();
         self.chain.push(block);
         self.height += 1;
-        if (self.validateChain().length === 0) {
+        const errorLog = await self.validateChain();
+        if (errorLog.length === 0) {
           resolve(block);
         }
       } catch (e) {
@@ -122,10 +123,16 @@ class Blockchain {
     return new Promise(async (resolve, reject) => {
       const time = parseInt(message.split(':')[1]);
       let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
-      console.log(currentTime - time <= 300);
+
       if (currentTime - time <= 300) {
         if (bitcoinMessage.verify(message, address, signature)) {
-          const block = BlockClass.block(star);
+          let starObject = {
+            address,
+            star,
+            message,
+            signature
+          };
+          const block = BlockClass.block(starObject);
           self._addBlock(block);
           resolve(block);
         }
@@ -143,7 +150,7 @@ class Blockchain {
   getBlockByHash(hash) {
     let self = this;
     return new Promise((resolve, reject) => {
-      resolve(self.chain.filter((block) => block.hash === hash));
+      resolve(self.chain.find((block) => block.hash === hash));
     });
   }
 
@@ -155,7 +162,7 @@ class Blockchain {
   getBlockByHeight(height) {
     let self = this;
     return new Promise((resolve, reject) => {
-      let block = self.chain.filter((p) => p.height === height)[0];
+      let block = self.chain.find((p) => p.height === height);
       if (block) {
         resolve(block);
       } else {
@@ -174,7 +181,7 @@ class Blockchain {
     let self = this;
     let stars = [];
     return new Promise((resolve, reject) => {
-      starts = self.chain.filter((block) => block.getBData());
+      stars = self.chain.filter((block) => block.getBData().address);
     });
   }
 
@@ -187,15 +194,18 @@ class Blockchain {
   validateChain() {
     let self = this;
     let errorLog = [];
-    for (let i = 0; i < self.chain.length - 1; i++) {
+    for (let i = 0; i < self.chain.length; i++) {
       const curBlock = self.chain[i];
+      if (i === self.chain.length - 1 && !curBlock.validate()) {
+        errorLog.push('Invalid');
+      }
       const nextBlock = self.chain[i + 1];
 
       if (
         !curBlock.validate() ||
         curBlock.hash !== nextBlock.previousBlockHash
       ) {
-        errorLog.push('not match');
+        errorLog.push('Invalid');
       }
     }
     return errorLog;
