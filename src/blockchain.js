@@ -132,7 +132,7 @@ class Blockchain {
             message,
             signature
           };
-          const block = BlockClass.block(starObject);
+          const block = new BlockClass.block(starObject);
           self._addBlock(block);
           resolve(block);
         }
@@ -194,21 +194,24 @@ class Blockchain {
   validateChain() {
     let self = this;
     let errorLog = [];
-    for (let i = 0; i < self.chain.length; i++) {
-      const curBlock = self.chain[i];
-      if (i === self.chain.length - 1 && !curBlock.validate()) {
-        errorLog.push('Invalid');
-      }
-      const nextBlock = self.chain[i + 1];
 
-      if (
-        !curBlock.validate() ||
-        curBlock.hash !== nextBlock.previousBlockHash
-      ) {
-        errorLog.push('Invalid');
+    return new Promise((resolve, reject) => {
+      for (let i = 0; i < self.chain.length; i++) {
+        const curBlock = self.chain[i];
+        if (i === self.chain.length - 1 && !curBlock.validate()) {
+          errorLog.push('Invalid');
+        }
+        const nextBlock = self.chain[i + 1];
+
+        if (
+          !curBlock.validate() ||
+          curBlock.hash !== nextBlock.previousBlockHash
+        ) {
+          errorLog.push('Invalid');
+        }
       }
-    }
-    return errorLog;
+      resolve(errorLog);
+    });
   }
 }
 

@@ -129,7 +129,7 @@ class BlockchainController {
   validateChain() {
     this.app.post('/validateChain', async (req, res) => {
       try {
-        let stars = await this.blockchain.validateChain();
+        return await this.blockchain.validateChain();
       } catch (error) {
         return res.status(500).send('An error happened!');
       }
