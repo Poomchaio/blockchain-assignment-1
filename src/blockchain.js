@@ -123,7 +123,6 @@ class Blockchain {
     return new Promise(async (resolve, reject) => {
       const time = parseInt(message.split(':')[1]);
       let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
-
       if (currentTime - time <= 300) {
         if (bitcoinMessage.verify(message, address, signature)) {
           let starObject = {
@@ -132,7 +131,7 @@ class Blockchain {
             message,
             signature
           };
-          const block = new BlockClass.block(starObject);
+          const block = new BlockClass.Block(starObject);
           self._addBlock(block);
           resolve(block);
         }
@@ -181,7 +180,11 @@ class Blockchain {
     let self = this;
     let stars = [];
     return new Promise((resolve, reject) => {
-      stars = self.chain.filter((block) => block.getBData().address);
+      stars = self.chain.filter((block) => {
+        const body = block.getBData();
+        return body && body.address === address;
+      });
+      resolve(stars);
     });
   }
 
@@ -196,21 +199,23 @@ class Blockchain {
     let errorLog = [];
 
     return new Promise((resolve, reject) => {
-      for (let i = 0; i < self.chain.length; i++) {
-        const curBlock = self.chain[i];
-        if (i === self.chain.length - 1 && !curBlock.validate()) {
-          errorLog.push('Invalid');
+      try {
+        for (let i = 0; i < self.chain.length; i++) {
+          const curBlock = self.chain[i];
+          if (!curBlock.validate()) {
+            errorLog.push(`Invalid Block : ${curBlock.height}`);
+          }
+          if (
+            curBlock.height > 0 &&
+            curBlock.previousBlockHash !== self.chain[i - 1].hash
+          ) {
+            errorLog.push(`Invalid Block : ${curBlock.height}`);
+          }
         }
-        const nextBlock = self.chain[i + 1];
-
-        if (
-          !curBlock.validate() ||
-          curBlock.hash !== nextBlock.previousBlockHash
-        ) {
-          errorLog.push('Invalid');
-        }
+        resolve(errorLog);
+      } catch (e) {
+        console.log(e);
       }
-      resolve(errorLog);
     });
   }
 }
