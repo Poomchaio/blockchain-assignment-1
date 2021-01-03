@@ -126,15 +126,14 @@ class Blockchain {
       if (currentTime - time <= 300) {
         if (bitcoinMessage.verify(message, address, signature)) {
           let starObject = {
-            address,
-            star,
-            message,
-            signature
+            owner: address,
+            star
           };
           const block = new BlockClass.Block(starObject);
-          self._addBlock(block);
+          await self._addBlock(block);
           resolve(block);
         }
+        reject('Invalid Signature');
       }
       reject('Timeouts');
     });
@@ -180,10 +179,15 @@ class Blockchain {
     let self = this;
     let stars = [];
     return new Promise((resolve, reject) => {
-      stars = self.chain.filter((block) => {
-        const body = block.getBData();
-        return body && body.address === address;
-      });
+      stars = self.chain
+        .filter((block) => {
+          const body = block.getBData();
+          return body && body.owner === address;
+        })
+        .map((block) => {
+          const body = block.getBData();
+          return body;
+        });
       resolve(stars);
     });
   }
